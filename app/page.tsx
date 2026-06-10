@@ -131,12 +131,9 @@ export default function LandingPage() {
               skrining penyakit cerdas, sistem darurat SOS, dan rekam medis keluarga dalam satu ekosistem preventif & prediktif.
             </p>
 
-            <div className="sehatra-hero-actions">
-              <Link href="/register" className="btn btn-primary btn-lg" style={{ padding: '16px 32px', fontSize: '1rem' }}>
-                Mulai Sekarang <ArrowRight size={20} />
-              </Link>
-              <Link href="/login" className="btn btn-secondary btn-lg" style={{ padding: '16px 32px', fontSize: '1rem' }}>
-                Akses Dashboard
+            <div style={{ marginBottom: 40 }}>
+              <Link href="/about" className="btn btn-primary" style={{ fontSize: '1rem', padding: '14px 32px' }}>
+                <ArrowRight size={20} /> Apa itu Sehatra?
               </Link>
             </div>
 

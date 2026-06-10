@@ -218,7 +218,7 @@ export default function DiseaseDetectionPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Kemungkinan Kondisi:</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {result.possibleConditions.map((cond: any, idx: number) => (
-                    <div key={idx} style={{ padding: 8, background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                    <div key={`condition-${idx}-${cond.name}`} style={{ padding: 8, background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
                       <div className="flex-between">
                         <strong style={{ fontSize: '0.8rem' }}>{cond.name}</strong>
                         <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>Akurasi {cond.probability}</span>
@@ -240,7 +240,7 @@ export default function DiseaseDetectionPage() {
                 <strong>Saran Tindakan:</strong>
                 <ul style={{ paddingLeft: 16, marginTop: 4 }}>
                   {result.recommendations.map((rec: string, idx: number) => (
-                    <li key={idx} style={{ marginBottom: 4 }}>{rec}</li>
+                    <li key={`rec-${idx}-${rec.substring(0, 15)}`} style={{ marginBottom: 4 }}>{rec}</li>
                   ))}
                 </ul>
               </div>

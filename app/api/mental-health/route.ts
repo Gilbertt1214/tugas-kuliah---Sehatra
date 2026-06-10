@@ -23,8 +23,14 @@ export async function GET() {
     const assessments = assessmentsResult.rows;
     
     return NextResponse.json({ logs, assessments });
-  } catch { 
-    return NextResponse.json({ error: 'Server error' }, { status: 500 }); 
+  } catch (error) { 
+    console.error('Mental health GET error:', error);
+    return NextResponse.json({ 
+      error: 'Server error', 
+      details: error instanceof Error ? error.message : String(error),
+      logs: [],
+      assessments: []
+    }, { status: 500 }); 
   }
 }
 
@@ -40,7 +46,15 @@ export async function POST(req: NextRequest) {
     if (body.type === 'mood') {
       await db.execute({
         sql: 'INSERT INTO mental_health_logs (user_id, mood_score, energy_level, stress_level, sleep_quality, notes, activities) VALUES (?,?,?,?,?,?,?)',
-        args: [user.id, body.mood_score, body.energy_level, body.stress_level, body.sleep_quality, body.notes, body.activities]
+        args: [
+          user.id, 
+          body.mood_score, 
+          body.energy_level || null, 
+          body.stress_level || null, 
+          body.sleep_quality || null, 
+          body.notes || null, 
+          body.activities || null
+        ]
       });
       return NextResponse.json({ message: 'Mood tercatat' }, { status: 201 });
     } else {
@@ -53,7 +67,11 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({ result }, { status: 201 });
     }
-  } catch { 
-    return NextResponse.json({ error: 'Server error' }, { status: 500 }); 
+  } catch (error) { 
+    console.error('Mental health API error:', error);
+    return NextResponse.json({ 
+      error: 'Server error', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 }); 
   }
 }

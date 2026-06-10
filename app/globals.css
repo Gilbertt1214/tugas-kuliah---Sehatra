@@ -183,6 +183,19 @@ textarea.input { resize: vertical; min-height: 120px; }
   position: fixed; left: 0; top: 0; bottom: 0; width: 280px;
   background: var(--bg-card); border-right: var(--border-brutal);
   padding: 32px 20px; display: flex; flex-direction: column; z-index: 100;
+  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+/* Scrollbar styling for sidebar */
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: var(--bg-dark); }
+.sidebar::-webkit-scrollbar-thumb { 
+  background: var(--text-muted); 
+  border-radius: 3px;
+  border: 1px solid #000000;
+}
+.sidebar::-webkit-scrollbar-thumb:hover { 
+  background: var(--primary); 
 }
 .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 0 8px; margin-bottom: 40px; }
 .sidebar-logo-icon {

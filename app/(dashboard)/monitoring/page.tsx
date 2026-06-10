@@ -290,7 +290,7 @@ export default function MonitoringPage() {
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {aiAlerts.map((a, i) => (
-                  <div key={i} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
+                  <div key={`alert-${i}-${a.text.substring(0, 20)}`} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
                     <span>•</span>
                     <span>{a.text}</span>
                   </div>

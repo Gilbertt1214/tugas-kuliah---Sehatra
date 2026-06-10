@@ -4,14 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Brain, 
   Smile, 
-  Frown, 
-  Meh, 
-  Laugh, 
-  Angry, 
-  Activity, 
-  Calendar,
   AlertCircle,
-  HelpCircle,
   UserCheck
 } from 'lucide-react';
 
@@ -52,13 +45,16 @@ interface Assessment {
 
 export default function MentalHealthPage() {
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setAssessments] = useState<Assessment[]>([]);
+  const [, setLoading] = useState(true);
 
   // Mood Tracker Form
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [moodNotes, setMoodNotes] = useState('');
   const [savingMood, setSavingMood] = useState(false);
+
+  // Psychology consultation modal
+  const [showConsultModal, setShowConsultModal] = useState(false);
 
   // PHQ-9 Assessment state
   const [quizActive, setQuizActive] = useState(false);
@@ -99,13 +95,21 @@ export default function MentalHealthPage() {
           notes: moodNotes
         })
       });
+      
+      const data = await res.json();
+      
       if (res.ok) {
         setSelectedMood(null);
         setMoodNotes('');
-        loadData();
+        await loadData(); // Reload data to show new entry
+        alert('Mood berhasil disimpan!');
+      } else {
+        console.error('Error saving mood:', data);
+        alert('Gagal menyimpan mood: ' + (data.error || 'Server error'));
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error submitting mood:', err);
+      alert('Terjadi kesalahan saat menyimpan mood');
     } finally {
       setSavingMood(false);
     }
@@ -196,7 +200,7 @@ export default function MentalHealthPage() {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
               Butuh teman bicara profesional? Tim psikolog kami siap membantu Anda menjaga kesehatan mental.
             </p>
-            <button className="btn btn-secondary btn-sm" style={{ width: '100%' }}>
+            <button className="btn btn-secondary btn-sm" style={{ width: '100%' }} onClick={() => setShowConsultModal(true)}>
               Hubungi Psikolog Berlisensi
             </button>
           </div>
@@ -228,7 +232,7 @@ export default function MentalHealthPage() {
                   <strong style={{ color: 'var(--accent-light)' }}>Rekomendasi AI:</strong>
                   <ul style={{ paddingLeft: 16, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {assessmentResult.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx}>{rec}</li>
+                      <li key={`mental-rec-${idx}-${rec.substring(0, 15)}`}>{rec}</li>
                     ))}
                   </ul>
                 </div>
@@ -251,7 +255,7 @@ export default function MentalHealthPage() {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                         {['Tidak Pernah', 'Beberapa Hari', 'Sebagian Hari', 'Hampir Tiap Hari'].map((opt, val) => (
                           <button 
-                            key={val} 
+                            key={`q${idx}-opt${val}`}
                             type="button"
                             className={`btn btn-sm ${quizAnswers[idx] === val ? 'btn-primary' : 'btn-secondary'}`}
                             onClick={() => handleQuizAnswer(idx, val)}
@@ -312,6 +316,88 @@ export default function MentalHealthPage() {
           </div>
         </div>
       </div>
+
+      {/* Psychology Consultation Modal */}
+      {showConsultModal && (
+        <div className="modal-overlay" onClick={() => setShowConsultModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Layanan Konsultasi Psikolog</h3>
+              <button className="btn btn-icon btn-secondary" onClick={() => setShowConsultModal(false)}>
+                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>×</span>
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <div className="card-glass" style={{ padding: 16, marginBottom: 16, borderLeft: '4px solid var(--primary)' }}>
+                <h4 style={{ fontSize: '0.95rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <UserCheck size={18} />
+                  Konsultasi dengan Psikolog Berlisensi
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  Tim psikolog profesional kami siap membantu Anda dengan:
+                </p>
+                <ul style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', paddingLeft: 20, marginTop: 8, lineHeight: 1.8 }}>
+                  <li key="service-1">Konseling kesehatan mental</li>
+                  <li key="service-2">Manajemen stres dan kecemasan</li>
+                  <li key="service-3">Terapi kognitif perilaku (CBT)</li>
+                  <li key="service-4">Konsultasi depresi dan trauma</li>
+                  <li key="service-5">Terapi keluarga dan hubungan</li>
+                </ul>
+              </div>
+
+              <div className="card-glass" style={{ padding: 16, marginBottom: 16 }}>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: 8 }}>📞 Kontak Layanan</h4>
+                <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <strong>Hotline 24/7:</strong><br />
+                    <a href="tel:1500567" style={{ color: 'var(--primary)', fontWeight: 700 }}>119 ext. 8</a> (Layanan Darurat Kesehatan Mental)
+                  </div>
+                  <div>
+                    <strong>WhatsApp:</strong><br />
+                    <a href="https://wa.me/628111909192" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                      +62 811-1909-192
+                    </a>
+                  </div>
+                  <div>
+                    <strong>Email:</strong><br />
+                    <a href="mailto:konseling@sehatra.com" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                      konseling@sehatra.com
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-glass" style={{ padding: 16, background: 'var(--warning)', borderColor: '#000', color: '#000' }}>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertCircle size={16} />
+                  Keadaan Darurat?
+                </h4>
+                <p style={{ fontSize: '0.8rem', marginBottom: 8 }}>
+                  Jika Anda dalam krisis atau memiliki pikiran untuk menyakiti diri sendiri, segera hubungi:
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <a href="tel:119" className="btn btn-danger btn-sm">
+                    🚨 Darurat 119
+                  </a>
+                  <a href="tel:021500454" className="btn btn-danger btn-sm">
+                    📞 Into The Light (021-500-454)
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <a href="https://wa.me/628111909192?text=Halo,%20saya%20ingin%20konsultasi%20dengan%20psikolog" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ flex: 1 }}>
+                💬WhatsApp
+              </a>
+              <button className="btn btn-secondary" onClick={() => setShowConsultModal(false)} style={{ flex: 1 }}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

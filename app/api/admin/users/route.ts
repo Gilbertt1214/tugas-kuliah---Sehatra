@@ -37,6 +37,17 @@ export async function GET() {
     const totalDetectionsResult = await db.execute('SELECT COUNT(*) as count FROM disease_detections');
     const totalDetections = totalDetectionsResult.rows[0] as unknown as { count: number };
 
+    const totalMoodLogsResult = await db.execute('SELECT COUNT(*) as count FROM mental_health_logs');
+    const totalMoodLogs = totalMoodLogsResult.rows[0] as unknown as { count: number };
+
+    const totalAssessmentsResult = await db.execute('SELECT COUNT(*) as count FROM mental_health_assessments');
+    const totalAssessments = totalAssessmentsResult.rows[0] as unknown as { count: number };
+
+    const activeTodayResult = await db.execute(
+      "SELECT COUNT(DISTINCT user_id) as count FROM mental_health_logs WHERE DATE(logged_at) = DATE('now')"
+    );
+    const activeToday = activeTodayResult.rows[0] as unknown as { count: number };
+
     return NextResponse.json({
       users,
       stats: {
@@ -45,6 +56,9 @@ export async function GET() {
         totalEmergencies: totalEmergencies.count,
         totalRecords: totalRecords.count,
         totalDetections: totalDetections.count,
+        totalMoodLogs: totalMoodLogs.count,
+        totalAssessments: totalAssessments.count,
+        activeToday: activeToday.count,
       }
     });
   } catch (error: unknown) {
