@@ -1,29 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db, { initializeDatabase } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 
 // GET: List all users (admin only)
 export async function GET() {
   try {
+    await initializeDatabase();
+    
     const currentUser = await getUser();
     if (!currentUser || currentUser.role !== 'admin') {
       return NextResponse.json({ error: 'Akses ditolak. Hanya admin.' }, { status: 403 });
     }
 
-    const users = db.prepare(`
+    const usersResult = await db.execute(`
       SELECT u.id, u.name, u.email, u.phone, u.nik, u.bpjs_number, u.role, u.created_at,
              hp.blood_type, hp.height, hp.weight, hp.birth_date, hp.gender
       FROM users u
       LEFT JOIN health_profiles hp ON u.id = hp.user_id
       ORDER BY u.created_at DESC
-    `).all();
+    `);
+    const users = usersResult.rows;
 
     // Get stats
-    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
-    const totalAdmins = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get() as { count: number };
-    const totalEmergencies = db.prepare('SELECT COUNT(*) as count FROM emergency_alerts').get() as { count: number };
-    const totalRecords = db.prepare('SELECT COUNT(*) as count FROM medical_records').get() as { count: number };
-    const totalDetections = db.prepare('SELECT COUNT(*) as count FROM disease_detections').get() as { count: number };
+    const totalUsersResult = await db.execute('SELECT COUNT(*) as count FROM users');
+    const totalUsers = totalUsersResult.rows[0] as unknown as { count: number };
+    
+    const totalAdminsResult = await db.execute("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
+    const totalAdmins = totalAdminsResult.rows[0] as unknown as { count: number };
+    
+    const totalEmergenciesResult = await db.execute('SELECT COUNT(*) as count FROM emergency_alerts');
+    const totalEmergencies = totalEmergenciesResult.rows[0] as unknown as { count: number };
+    
+    const totalRecordsResult = await db.execute('SELECT COUNT(*) as count FROM medical_records');
+    const totalRecords = totalRecordsResult.rows[0] as unknown as { count: number };
+    
+    const totalDetectionsResult = await db.execute('SELECT COUNT(*) as count FROM disease_detections');
+    const totalDetections = totalDetectionsResult.rows[0] as unknown as { count: number };
 
     return NextResponse.json({
       users,
@@ -44,6 +56,8 @@ export async function GET() {
 // DELETE: Delete a user (admin only)
 export async function DELETE(req: NextRequest) {
   try {
+    await initializeDatabase();
+    
     const currentUser = await getUser();
     if (!currentUser || currentUser.role !== 'admin') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
@@ -58,7 +72,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Tidak bisa menghapus akun sendiri.' }, { status: 400 });
     }
 
-    db.prepare('DELETE FROM users WHERE id = ?').run(parseInt(userId));
+    await db.execute({
+      sql: 'DELETE FROM users WHERE id = ?',
+      args: [parseInt(userId)]
+    });
+    
     return NextResponse.json({ message: 'User berhasil dihapus.' });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -69,6 +87,8 @@ export async function DELETE(req: NextRequest) {
 // PATCH: Update user role (admin only)
 export async function PATCH(req: NextRequest) {
   try {
+    await initializeDatabase();
+    
     const currentUser = await getUser();
     if (!currentUser || currentUser.role !== 'admin') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
@@ -85,7 +105,11 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Tidak bisa mengubah role akun sendiri.' }, { status: 400 });
     }
 
-    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, userId);
+    await db.execute({
+      sql: 'UPDATE users SET role = ? WHERE id = ?',
+      args: [role, userId]
+    });
+    
     return NextResponse.json({ message: `Role berhasil diubah ke ${role}.` });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

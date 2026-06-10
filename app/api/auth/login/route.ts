@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db, { initializeDatabase } from '@/lib/db';
 import { verifyPassword, createToken, setTokenCookie } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await initializeDatabase();
+    
     const { identifier, password } = await req.json();
     if (!identifier || !password) {
       return NextResponse.json({ error: 'Email/NIK dan password wajib diisi' }, { status: 400 });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ? OR nik = ? OR bpjs_number = ?').get(identifier, identifier, identifier) as Record<string, unknown> | undefined;
+    const result = await db.execute({
+      sql: 'SELECT * FROM users WHERE email = ? OR nik = ? OR bpjs_number = ?',
+      args: [identifier, identifier, identifier]
+    });
+    const user = result.rows[0] as unknown as Record<string, unknown> | undefined;
 
     if (!user || !verifyPassword(password, user.password_hash as string)) {
       return NextResponse.json({ error: 'Email/NIK atau password salah' }, { status: 401 });

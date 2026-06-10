@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db, { initializeDatabase } from '@/lib/db';
 import { getUser, clearTokenCookie } from '@/lib/auth';
 
 export async function GET() {
   try {
+    await initializeDatabase();
+    
     const user = await getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const profile = db.prepare('SELECT * FROM health_profiles WHERE user_id = ?').get(user.id);
-    const userData = db.prepare('SELECT id, name, email, phone, nik, bpjs_number, avatar_url, role, created_at FROM users WHERE id = ?').get(user.id);
+    const profileResult = await db.execute({
+      sql: 'SELECT * FROM health_profiles WHERE user_id = ?',
+      args: [user.id]
+    });
+    const profile = profileResult.rows[0];
+
+    const userDataResult = await db.execute({
+      sql: 'SELECT id, name, email, phone, nik, bpjs_number, avatar_url, role, created_at FROM users WHERE id = ?',
+      args: [user.id]
+    });
+    const userData = userDataResult.rows[0];
 
     return NextResponse.json({ user: userData, profile });
   } catch {
