@@ -154,7 +154,7 @@ export default function MentalHealthPage() {
 
   return (
     <div className="page-container animate-in">
-      <div className="grid-2" style={{ gridTemplateColumns: '1.2fr 1.8fr', alignItems: 'start' }}>
+      <div className="grid-2-custom" style={{ alignItems: 'start' }}>
         {/* Mood Tracker */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className="card">
@@ -252,7 +252,7 @@ export default function MentalHealthPage() {
                   {PHQ9_QUESTIONS.map((q, idx) => (
                     <div key={idx} style={{ paddingBottom: 16, borderBottom: '1px solid var(--glass-border)' }}>
                       <p style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: 8 }}>{idx + 1}. {q}</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                      <div className="quiz-options">
                         {['Tidak Pernah', 'Beberapa Hari', 'Sebagian Hari', 'Hampir Tiap Hari'].map((opt, val) => (
                           <button 
                             key={`q${idx}-opt${val}`}

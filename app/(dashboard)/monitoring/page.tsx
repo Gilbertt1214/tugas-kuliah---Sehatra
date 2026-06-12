@@ -289,8 +289,8 @@ export default function MonitoringPage() {
                 Analisis & Peringatan AI
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {aiAlerts.map((a, i) => (
-                  <div key={`alert-${i}-${a.text.substring(0, 20)}`} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
+                {aiAlerts.map((a) => (
+                  <div key={a.text} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
                     <span>•</span>
                     <span>{a.text}</span>
                   </div>
@@ -302,7 +302,7 @@ export default function MonitoringPage() {
           {/* Heart Rate Graph */}
           <div className="card">
             <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Grafik Detak Jantung (Bpm)</h3>
-            <div style={{ width: '100%', height: 200 }}>
+            <div style={{ width: '100%', height: 200, minWidth: 0, minHeight: 200 }}>
               {heartRateData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={heartRateData}>
@@ -324,7 +324,7 @@ export default function MonitoringPage() {
           {/* Steps Graph */}
           <div className="card">
             <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Grafik Aktivitas Langkah Kaki</h3>
-            <div style={{ width: '100%', height: 200 }}>
+            <div style={{ width: '100%', height: 200, minWidth: 0, minHeight: 200 }}>
               {stepsData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stepsData}>

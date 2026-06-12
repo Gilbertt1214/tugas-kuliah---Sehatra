@@ -16,7 +16,8 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/family': { title: 'Family Health Dashboard', subtitle: 'Pantau kesehatan dan kelola pengingat seluruh anggota keluarga' },
   '/mental-health': { title: 'Mental Health Care', subtitle: 'Mood tracker, analisis kesehatan mental, dan konsultasi' },
   '/detection': { title: 'Smart Disease Detection', desc: 'Analisis gejala interaktif berbasis AI untuk deteksi dini risiko penyakit' } as any,
-  '/healthy-living': { title: 'Healthy Living Assistant', subtitle: 'Atur target kesehatan, jadwal obat, dan pengingat harian' }
+  '/healthy-living': { title: 'Healthy Living Assistant', subtitle: 'Atur target kesehatan, jadwal obat, dan pengingat harian' },
+  '/ai-chat': { title: 'Asisten Kesehatan AI', subtitle: 'Konsultasi kesehatan cerdas didukung oleh Qwen AI' }
 };
 
 export default function Header({ userName, onOpenSidebar }: HeaderProps) {

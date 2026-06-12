@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json({ message: 'Mood tercatat' }, { status: 201 });
     } else {
-      const result = assessMentalHealth(body.answers);
+      const result = await assessMentalHealth(body.answers);
       
       await db.execute({
         sql: 'INSERT INTO mental_health_assessments (user_id, assessment_type, answers, total_score, risk_level, recommendations) VALUES (?,?,?,?,?,?)',

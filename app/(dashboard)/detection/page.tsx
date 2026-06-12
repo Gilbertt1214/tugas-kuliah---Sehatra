@@ -46,6 +46,7 @@ export default function DiseaseDetectionPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const [history, setHistory] = useState<DetectionLog[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = async () => {
     try {
@@ -87,32 +88,33 @@ export default function DiseaseDetectionPage() {
     if (selectedSymptoms.length === 0) return;
     setAnalyzing(true);
     setResult(null);
+    setError(null);
 
-    // Simulate AI loading effect
-    setTimeout(async () => {
-      try {
-        const res = await fetch('/api/detection', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            symptoms: selectedSymptoms,
-            description
-          })
-        });
-        if (res.ok) {
-          const d = await res.json();
-          setResult(d.result);
-          setSelectedSymptoms([]);
-          setDescription('');
-          setImageFile(null);
-          fetchHistory();
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setAnalyzing(false);
+    try {
+      const res = await fetch('/api/detection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symptoms: selectedSymptoms,
+          description
+        })
+      });
+      if (!res.ok) {
+        const errText = await res.json().catch(() => ({ error: 'Gagal menganalisis gejala' }));
+        throw new Error(errText.error || `HTTP error! status: ${res.status}`);
       }
-    }, 1500);
+      const d = await res.json();
+      setResult(d.result);
+      setSelectedSymptoms([]);
+      setDescription('');
+      setImageFile(null);
+      fetchHistory();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Terjadi kesalahan saat menganalisis gejala.');
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const formatSymptomIdsToText = (jsonString: string) => {
@@ -129,7 +131,7 @@ export default function DiseaseDetectionPage() {
 
   return (
     <div className="page-container animate-in">
-      <div className="grid-2" style={{ gridTemplateColumns: '1.8fr 1.2fr' }}>
+      <div className="grid-2-custom-alt">
         {/* Symptom Selector Form */}
         <div className="card">
           <h3 style={{ fontSize: '1.1rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -194,6 +196,12 @@ export default function DiseaseDetectionPage() {
                 </>
               )}
             </button>
+            {error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, color: 'var(--danger)', fontSize: '0.85rem', padding: '8px 12px', border: '1px solid var(--danger)', borderRadius: 'var(--radius-sm)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
           </form>
         </div>
 

@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   Heart,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-react';
 
 const MENU_ITEMS = [
@@ -27,6 +28,7 @@ const MENU_ITEMS = [
   { href: '/mental-health', label: 'Kesehatan Mental', icon: Brain },
   { href: '/detection', label: 'Deteksi Penyakit', icon: Search },
   { href: '/healthy-living', label: 'Gaya Hidup Sehat', icon: Calendar },
+  { href: '/ai-chat', label: 'Asisten AI Qwen', icon: MessageSquare },
 ];
 
 interface SidebarProps {

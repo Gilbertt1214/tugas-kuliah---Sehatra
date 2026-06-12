@@ -29,7 +29,7 @@ export default function LandingPage() {
       title: 'Health Monitoring', 
       desc: 'Pantau indikator vital harian (detak jantung, tekanan darah, tidur) terintegrasi IoT.',
       badge: 'Real-time',
-      bg: 'hsl(199, 89%, 65%)'
+      bg: 'var(--primary-light)'
     },
     { 
       icon: <ShieldAlert style={{ color: '#000000' }} />, 
@@ -43,7 +43,7 @@ export default function LandingPage() {
       title: 'Mental Health Care', 
       desc: 'Skrining suasana hati, tracking tingkat stres, dan asisten AI curhat yang aman.',
       badge: 'Sesi Privat',
-      bg: 'hsl(271, 91%, 75%)'
+      bg: 'var(--secondary)'
     },
     { 
       icon: <Search style={{ color: '#000000' }} />, 
@@ -64,7 +64,7 @@ export default function LandingPage() {
       title: 'Integrated Records', 
       desc: 'Simpan riwayat medis, diagnosis dokter, dan resep obat digital Anda secara aman.',
       badge: 'Terorganisir',
-      bg: 'hsl(199, 89%, 75%)'
+      bg: 'var(--secondary-light)'
     }
   ];
 
@@ -225,8 +225,8 @@ export default function LandingPage() {
 
         {/* Features List */}
         <div className="sehatra-features-grid">
-          {features.map((f, i) => (
-            <div key={i} style={{
+          {features.map((f) => (
+            <div key={f.title} style={{
               padding: 28, border: 'var(--border-brutal)', borderRadius: 'var(--radius-brutal)',
               background: 'var(--bg-card)', boxShadow: '6px 6px 0px #000000', display: 'flex', flexDirection: 'column',
               transition: 'var(--transition-brutal)', position: 'relative'
@@ -253,7 +253,7 @@ export default function LandingPage() {
               {/* Tag / Badge */}
               <div style={{
                 alignSelf: 'flex-start', padding: '4px 12px', border: '2px solid #000000',
-                borderRadius: 4, background: '#000000', color: 'var(--text-primary)',
+                borderRadius: 4, background: '#000000', color: '#ffffff',
                 fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase'
               }}>
                 {f.badge}

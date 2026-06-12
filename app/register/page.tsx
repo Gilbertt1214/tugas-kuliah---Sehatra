@@ -64,7 +64,7 @@ export default function RegisterPage() {
         {step === 3 && (
           <div className="auth-form">
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 8 }}>Profil kesehatan (opsional, bisa diisi nanti)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="grid-equal-2">
               <div className="input-group"><label>Golongan Darah</label><select className="input" value={form.blood_type} onChange={e => update('blood_type', e.target.value)}><option value="">Pilih</option><option>A</option><option>B</option><option>AB</option><option>O</option></select></div>
               <div className="input-group"><label>Jenis Kelamin</label><select className="input" value={form.gender} onChange={e => update('gender', e.target.value)}><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
               <div className="input-group"><label>Tinggi (cm)</label><input className="input" type="number" placeholder="170" value={form.height} onChange={e => update('height', e.target.value)} /></div>

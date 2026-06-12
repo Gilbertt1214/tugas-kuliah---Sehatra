@@ -229,8 +229,8 @@ export default function AboutPage() {
                 { icon: <ShieldAlert size={20} />, label: 'Preventif', color: 'var(--success)' },
                 { icon: <Brain size={20} />, label: 'Interaktif', color: 'var(--primary)' },
                 { icon: <Activity size={20} />, label: 'Terintegrasi', color: 'var(--warning)' }
-              ].map((item, i) => (
-                <div key={i} style={{
+              ].map((item) => (
+                <div key={item.label} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
@@ -289,8 +289,8 @@ export default function AboutPage() {
                 icon: <Users size={32} />,
                 color: 'var(--warning)'
               }
-            ].map((concept, i) => (
-              <div key={i} style={{
+            ].map((concept) => (
+              <div key={concept.title} style={{
                 background: 'var(--bg-card)',
                 border: 'var(--border-brutal)',
                 borderRadius: 'var(--radius-brutal)',
@@ -387,8 +387,8 @@ export default function AboutPage() {
                 bg: 'hsl(350, 89%, 70%)',
                 features: ['Medication reminder', 'Health goals', 'Lifestyle tips']
               }
-            ].map((service, i) => (
-              <div key={i} style={{
+            ].map((service) => (
+              <div key={service.title} style={{
                 background: 'var(--bg-card)',
                 border: 'var(--border-brutal)',
                 borderRadius: 'var(--radius-brutal)',
@@ -489,8 +489,8 @@ export default function AboutPage() {
                 Dengan teknologi AI dan IoT, Sehatra mentransformasi cara masyarakat Indonesia menjaga kesehatan mereka.
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                {features.map((f, i) => (
-                  <div key={i} style={{
+                {features.map((f) => (
+                  <div key={f.text} style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
@@ -541,8 +541,8 @@ export default function AboutPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-            {values.map((v, i) => (
-              <div key={i} style={{
+            {values.map((v) => (
+              <div key={v.title} style={{
                 padding: 32,
                 background: 'var(--bg-card)',
                 border: 'var(--border-brutal)',
@@ -595,8 +595,8 @@ export default function AboutPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 32 }}>
-            {stats.map((s, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
+            {stats.map((s) => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{
                   width: 80,
                   height: 80,
@@ -642,8 +642,8 @@ export default function AboutPage() {
               { name: 'TensorFlow', desc: 'AI/ML Engine', color: 'var(--danger)' },
               { name: 'IoT Integration', desc: 'Smart Devices', color: 'hsl(271, 91%, 75%)' },
               { name: 'End-to-End Encryption', desc: 'Data Security', color: 'var(--accent)' }
-            ].map((tech, i) => (
-              <div key={i} style={{
+            ].map((tech) => (
+              <div key={tech.name} style={{
                 padding: 20,
                 background: 'var(--bg-card)',
                 border: 'var(--border-brutal)',

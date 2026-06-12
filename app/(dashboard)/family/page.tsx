@@ -214,7 +214,7 @@ export default function FamilyPage() {
                 <input className="input" placeholder="Nama Lengkap" value={name} onChange={e => setName(e.target.value)} required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid-equal-2">
                 <div className="input-group">
                   <label>Hubungan *</label>
                   <select className="input" value={relationship} onChange={e => setRelationship(e.target.value)}>
@@ -236,7 +236,7 @@ export default function FamilyPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid-equal-2">
                 <div className="input-group">
                   <label>Tanggal Lahir *</label>
                   <input className="input" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} required />

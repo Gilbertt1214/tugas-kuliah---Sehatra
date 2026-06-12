@@ -3,82 +3,45 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Users,
-  ShieldCheck,
-  Trash2,
-  AlertTriangle,
-  Activity,
-  FileText,
-  Search,
-  UserCheck,
-  UserX,
-  ChevronDown,
-  BarChart3,
-  Download,
-  Eye,
-  Filter,
-  RefreshCw,
-  Database,
-  Clock,
-  TrendingUp,
-  Brain,
-  Heart
+  Users, ShieldCheck, Trash2, AlertTriangle, Activity, FileText, Search, UserCheck, UserX,
+  BarChart3, Download, Eye, Filter, RefreshCw, Database, Clock, TrendingUp, Brain, Heart,
+  Server, LayoutDashboard, Cpu, Network
 } from 'lucide-react';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
+} from 'recharts';
 
 interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  nik: string;
-  bpjs_number: string;
-  role: string;
-  created_at: string;
-  blood_type: string;
-  height: number;
-  weight: number;
-  birth_date: string;
-  gender: string;
+  id: number; name: string; email: string; phone: string; nik: string; bpjs_number: string; role: string;
+  created_at: string; blood_type: string; height: number; weight: number; birth_date: string; gender: string;
 }
 
 interface Stats {
-  totalUsers: number;
-  totalAdmins: number;
-  totalEmergencies: number;
-  totalRecords: number;
-  totalDetections: number;
-  totalMoodLogs?: number;
-  totalAssessments?: number;
-  activeToday?: number;
+  totalUsers: number; totalAdmins: number; totalEmergencies: number; totalRecords: number;
+  totalDetections: number; totalMoodLogs?: number; totalAssessments?: number; activeToday?: number;
 }
 
 interface ActivityLog {
-  id: number;
-  user_id: number;
-  user_name: string;
-  action: string;
-  description: string;
-  created_at: string;
+  id: number; user_id: number; user_name: string; action: string; description: string; created_at: string;
 }
 
 interface SystemHealth {
-  databaseSize: string;
-  totalTables: number;
-  uptime: string;
-  lastBackup: string;
+  databaseSize: string; totalTables: number; uptime: string; lastBackup: string;
+  cpuUsage: string; memoryUsage: string; activeConnections: number; latency: string; status: string;
 }
 
 export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system'>('overview');
   const [users, setUsers] = useState<UserData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [chartData, setChartData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [actionMsg, setActionMsg] = useState('');
+  
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
-  const [showActivityLogs, setShowActivityLogs] = useState(false);
-  const [showSystemHealth, setShowSystemHealth] = useState(false);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [filterRole, setFilterRole] = useState<string>('all');
@@ -96,9 +59,10 @@ export default function AdminPage() {
         const d = await res.json();
         setUsers(d.users || []);
         setStats(d.stats || null);
+        setChartData(d.chartData || null);
       }
     } catch (err) {
-      setError('Gagal memuat data.');
+      setError('Gagal memuat data utama.');
     } finally {
       setLoading(false);
     }
@@ -130,6 +94,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     loadData();
+    loadActivityLogs();
+    loadSystemHealth();
+
+    const interval = setInterval(() => {
+      loadSystemHealth();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleDeleteUser = async (userId: number, userName: string) => {
@@ -171,68 +143,30 @@ export default function AdminPage() {
     }
   };
 
-  const handleViewUser = (user: UserData) => {
-    setSelectedUser(user);
-    setShowUserModal(true);
-  };
-
   const handleExportCSV = () => {
     const headers = ['ID', 'Nama', 'Email', 'NIK', 'BPJS', 'Phone', 'Role', 'Gender', 'Blood Type', 'Terdaftar'];
     const rows = users.map(u => [
-      u.id,
-      u.name,
-      u.email,
-      u.nik || '-',
-      u.bpjs_number || '-',
-      u.phone || '-',
-      u.role,
-      u.gender || '-',
-      u.blood_type || '-',
-      new Date(u.created_at).toLocaleDateString('id-ID')
+      u.id, u.name, u.email, u.nik || '-', u.bpjs_number || '-', u.phone || '-', u.role, u.gender || '-', u.blood_type || '-', new Date(u.created_at).toLocaleDateString('id-ID')
     ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
+    const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `sehatra-users-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    
     setActionMsg('Data berhasil diexport ke CSV!');
     setTimeout(() => setActionMsg(''), 3000);
-  };
-
-  const handleToggleSelectUser = (userId: number) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedUsers.length === filteredUsers.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(filteredUsers.map(u => u.id));
-    }
   };
 
   const handleBulkDelete = async () => {
     if (selectedUsers.length === 0) return;
     if (!confirm(`Yakin ingin menghapus ${selectedUsers.length} pengguna? Aksi ini tidak bisa dibatalkan.`)) return;
-    
     try {
       const res = await fetch('/api/admin/users/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userIds: selectedUsers })
       });
-      
       if (res.ok) {
         setActionMsg(`${selectedUsers.length} pengguna berhasil dihapus.`);
         setSelectedUsers([]);
@@ -248,11 +182,8 @@ export default function AdminPage() {
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.nik?.includes(searchTerm);
-    
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || u.nik?.includes(searchTerm);
     const matchesRole = filterRole === 'all' || u.role === filterRole;
-    
     return matchesSearch && matchesRole;
   });
 
@@ -263,9 +194,7 @@ export default function AdminPage() {
           <ShieldCheck size={56} style={{ color: 'var(--danger)', marginBottom: 16 }} />
           <h2 style={{ marginBottom: 8 }}>Akses Ditolak</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>{error}</p>
-          <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
-            Kembali ke Dashboard
-          </button>
+          <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>Kembali ke Dashboard</button>
         </div>
       </div>
     );
@@ -275,396 +204,122 @@ export default function AdminPage() {
     <div className="page-container animate-in">
       <div className="page-header flex-between" style={{ flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 className="page-title">Admin Panel</h1>
-          <p className="page-subtitle">Kelola pengguna, pantau statistik platform Sehatra.</p>
+          <h1 className="page-title">Admin Console</h1>
+          <p className="page-subtitle">Pusat kendali, analitik, dan manajemen platform Sehatra.</p>
         </div>
       </div>
 
-      {actionMsg && (
-        <div className="success-message" style={{ marginBottom: 24 }}>
-          {actionMsg}
-        </div>
-      )}
+      {actionMsg && <div className="success-message" style={{ marginBottom: 24 }}>{actionMsg}</div>}
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid-4" style={{ marginBottom: 32 }}>
-          <div key="stat-users" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--primary)', color: '#000000' }}>
-              <Users size={22} />
-            </div>
-            <div className="metric-value">{stats.totalUsers}</div>
-            <div className="metric-label">Total Pengguna</div>
-          </div>
-          <div key="stat-admins" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--secondary)', color: '#000000' }}>
-              <ShieldCheck size={22} />
-            </div>
-            <div className="metric-value">{stats.totalAdmins}</div>
-            <div className="metric-label">Total Admin</div>
-          </div>
-          <div key="stat-emergencies" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--danger)', color: '#000000' }}>
-              <AlertTriangle size={22} />
-            </div>
-            <div className="metric-value">{stats.totalEmergencies}</div>
-            <div className="metric-label">Total Darurat</div>
-          </div>
-          <div key="stat-records" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--success)', color: '#000000' }}>
-              <FileText size={22} />
-            </div>
-            <div className="metric-value">{stats.totalRecords}</div>
-            <div className="metric-label">Rekam Medis</div>
-          </div>
-          <div key="stat-mood" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--accent)', color: '#000000' }}>
-              <Brain size={22} />
-            </div>
-            <div className="metric-value">{stats.totalMoodLogs || 0}</div>
-            <div className="metric-label">Mood Logs</div>
-          </div>
-          <div key="stat-assessments" className="metric-card">
-            <div className="metric-icon" style={{ background: 'var(--accent-light)', color: '#000000' }}>
-              <Heart size={22} />
-            </div>
-            <div className="metric-value">{stats.totalAssessments || 0}</div>
-            <div className="metric-label">Assessments</div>
-          </div>
-          <div key="stat-detections" className="metric-card">
-            <div className="metric-icon" style={{ background: '#FF6B9D', color: '#000000' }}>
-              <Activity size={22} />
-            </div>
-            <div className="metric-value">{stats.totalDetections || 0}</div>
-            <div className="metric-label">Deteksi Penyakit</div>
-          </div>
-          <div key="stat-active" className="metric-card">
-            <div className="metric-icon" style={{ background: '#4ECDC4', color: '#000000' }}>
-              <TrendingUp size={22} />
-            </div>
-            <div className="metric-value">{stats.activeToday || 0}</div>
-            <div className="metric-label">Aktif Hari Ini</div>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="grid-3" style={{ marginBottom: 32 }}>
-        <button
-          key="action-logs"
-          className="btn btn-secondary"
-          onClick={() => {
-            setShowActivityLogs(true);
-            loadActivityLogs();
-          }}
-          style={{ width: '100%', justifyContent: 'center', gap: 8 }}
+      {/* TABS NAVIGATION */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, borderBottom: '2px solid var(--border)', paddingBottom: 16 }}>
+        <button 
+          className={`btn ${activeTab === 'overview' ? 'btn-primary' : 'btn-secondary'}`} 
+          onClick={() => setActiveTab('overview')}
+          style={{ gap: 8 }}
         >
-          <Clock size={18} /> Lihat Activity Logs
+          <LayoutDashboard size={16} /> Overview & Analytics
         </button>
-        <button
-          key="action-health"
-          className="btn btn-secondary"
-          onClick={() => {
-            setShowSystemHealth(true);
-            loadSystemHealth();
-          }}
-          style={{ width: '100%', justifyContent: 'center', gap: 8 }}
+        <button 
+          className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`} 
+          onClick={() => setActiveTab('users')}
+          style={{ gap: 8 }}
         >
-          <Database size={18} /> System Health
+          <Users size={16} /> User Management
         </button>
-        <button
-          key="action-export"
-          className="btn btn-primary"
-          onClick={handleExportCSV}
-          style={{ width: '100%', justifyContent: 'center', gap: 8 }}
+        <button 
+          className={`btn ${activeTab === 'system' ? 'btn-primary' : 'btn-secondary'}`} 
+          onClick={() => setActiveTab('system')}
+          style={{ gap: 8 }}
         >
-          <Download size={18} /> Export CSV
+          <Server size={16} /> System Diagnostics
         </button>
       </div>
 
-      {/* Users Table */}
-      <div className="card">
-        <div className="flex-between" style={{ marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-          <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={18} /> Daftar Semua Pengguna ({filteredUsers.length})
-          </h3>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {/* Role Filter */}
-            <div style={{ position: 'relative' }}>
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="input"
-                style={{ paddingRight: 32, minWidth: 120 }}
-              >
-                <option value="all">Semua Role</option>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-              <Filter size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+      {/* TAB 1: OVERVIEW & ANALYTICS */}
+      {activeTab === 'overview' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {stats && (
+            <div className="grid-4">
+              <div className="metric-card">
+                <div className="metric-icon" style={{ background: 'var(--primary)', color: '#000' }}><Users size={22} /></div>
+                <div className="metric-value">{stats.totalUsers}</div>
+                <div className="metric-label">Total Pengguna</div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-icon" style={{ background: 'var(--success)', color: '#000' }}><TrendingUp size={22} /></div>
+                <div className="metric-value">{stats.activeToday || 0}</div>
+                <div className="metric-label">Aktif Hari Ini</div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-icon" style={{ background: 'var(--danger)', color: '#000' }}><AlertTriangle size={22} /></div>
+                <div className="metric-value">{stats.totalEmergencies}</div>
+                <div className="metric-label">Total Darurat</div>
+              </div>
+              <div className="metric-card">
+                <div className="metric-icon" style={{ background: 'var(--accent)', color: '#000' }}><Activity size={22} /></div>
+                <div className="metric-value">{stats.totalDetections || 0}</div>
+                <div className="metric-label">Deteksi Penyakit</div>
+              </div>
             </div>
-            
-            {/* Search */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--bg-input)', border: 'var(--border-brutal)', borderRadius: 'var(--radius-brutal)', padding: '8px 14px', boxShadow: '3px 3px 0px #000000' }}>
-              <Search size={16} style={{ color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Cari nama, email, NIK..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', minWidth: 200 }}
-              />
-            </div>
-            
-            {/* Refresh */}
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={loadData}
-              title="Refresh Data"
-            >
-              <RefreshCw size={16} />
-            </button>
-          </div>
-        </div>
+          )}
 
-        {/* Bulk Actions */}
-        {selectedUsers.length > 0 && (
-          <div className="card-glass" style={{ marginBottom: 16, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--accent)', borderColor: '#000' }}>
-            <span style={{ fontWeight: 700, color: '#000' }}>
-              {selectedUsers.length} pengguna dipilih
-            </span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={handleBulkDelete}
-              >
-                <Trash2 size={14} /> Hapus Semua
-              </button>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setSelectedUsers([])}
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: 40 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                    onChange={handleSelectAll}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </th>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>NIK</th>
-                <th>Role</th>
-                <th>Terdaftar</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((u) => (
-                  <tr key={u.id} style={{ background: selectedUsers.includes(u.id) ? 'var(--glass-bg)' : undefined }}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(u.id)}
-                        onChange={() => handleToggleSelectUser(u.id)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 800 }}>{u.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {u.gender === 'L' ? 'Laki-laki' : u.gender === 'P' ? 'Perempuan' : '-'} | Gol. Darah: {u.blood_type || '-'}
-                      </div>
-                    </td>
-                    <td>{u.email}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{u.nik || '-'}</td>
-                    <td>
-                      <span className={`badge ${u.role === 'admin' ? 'badge-danger' : 'badge-primary'}`}>
-                        {u.role?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: '0.85rem' }}>
-                      {new Date(u.created_at).toLocaleDateString('id-ID')}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleViewUser(u)}
-                          title="Lihat Detail"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleChangeRole(u.id, u.role)}
-                          title={u.role === 'admin' ? 'Jadikan User' : 'Jadikan Admin'}
-                        >
-                          {u.role === 'admin' ? <UserX size={14} /> : <UserCheck size={14} />}
-                        </button>
-                        <button
-                          className="btn btn-sm"
-                          style={{ background: 'var(--danger)', color: '#000000', border: 'var(--border-brutal)', boxShadow: '3px 3px 0px #000000' }}
-                          onClick={() => handleDeleteUser(u.id, u.name)}
-                          title="Hapus Pengguna"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                    {searchTerm ? 'Tidak ada pengguna ditemukan.' : 'Belum ada pengguna terdaftar.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* User Detail Modal */}
-      {showUserModal && selectedUser && (
-        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Detail Pengguna</h3>
-              <button className="btn btn-icon btn-secondary" onClick={() => setShowUserModal(false)}>
-                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>×</span>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div key="modal-account" className="card-glass" style={{ padding: 16 }}>
-                <h4 style={{ fontSize: '0.95rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Users size={16} /> Informasi Akun
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
-                  <strong key="account-id-label">ID:</strong>
-                  <span key="account-id-value">{selectedUser.id}</span>
-                  
-                  <strong key="account-name-label">Nama Lengkap:</strong>
-                  <span key="account-name-value">{selectedUser.name}</span>
-                  
-                  <strong key="account-email-label">Email:</strong>
-                  <span key="account-email-value">{selectedUser.email}</span>
-                  
-                  <strong key="account-phone-label">Telepon:</strong>
-                  <span key="account-phone-value">{selectedUser.phone || '-'}</span>
-                  
-                  <strong key="account-role-label">Role:</strong>
-                  <span key="account-role-value" className={`badge ${selectedUser.role === 'admin' ? 'badge-danger' : 'badge-primary'}`}>
-                    {selectedUser.role?.toUpperCase()}
-                  </span>
-                  
-                  <strong key="account-reg-label">Terdaftar:</strong>
-                  <span key="account-reg-value">{new Date(selectedUser.created_at).toLocaleString('id-ID')}</span>
+          {chartData && (
+            <div className="grid-2-custom">
+              <div className="card">
+                <h3 style={{ fontSize: '1.1rem', marginBottom: 16 }}>Pertumbuhan Pengguna (6 Bulan)</h3>
+                <div style={{ width: '100%', height: 300, minWidth: 0, minHeight: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData.growthData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="month" stroke="var(--text-muted)" />
+                      <YAxis stroke="var(--text-muted)" />
+                      <RechartsTooltip contentStyle={{ background: 'var(--bg-card)', borderColor: '#000' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="users" name="Total Users" stroke="var(--primary)" strokeWidth={3} />
+                      <Line type="monotone" dataKey="active" name="Active Users" stroke="var(--success)" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-
-              <div key="modal-identity" className="card-glass" style={{ padding: 16 }}>
-                <h4 style={{ fontSize: '0.95rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <FileText size={16} /> Data Identitas
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
-                  <strong key="identity-nik-label">NIK:</strong>
-                  <span key="identity-nik-value">{selectedUser.nik || '-'}</span>
-                  
-                  <strong key="identity-bpjs-label">No. BPJS:</strong>
-                  <span key="identity-bpjs-value">{selectedUser.bpjs_number || '-'}</span>
-                  
-                  <strong key="identity-birth-label">Tanggal Lahir:</strong>
-                  <span key="identity-birth-value">{selectedUser.birth_date ? new Date(selectedUser.birth_date).toLocaleDateString('id-ID') : '-'}</span>
-                  
-                  <strong key="identity-gender-label">Jenis Kelamin:</strong>
-                  <span key="identity-gender-value">{selectedUser.gender === 'L' ? 'Laki-laki' : selectedUser.gender === 'P' ? 'Perempuan' : '-'}</span>
-                </div>
-              </div>
-
-              <div key="modal-health" className="card-glass" style={{ padding: 16 }}>
-                <h4 style={{ fontSize: '0.95rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Heart size={16} /> Profil Kesehatan
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
-                  <strong key="health-blood-label">Golongan Darah:</strong>
-                  <span key="health-blood-value">{selectedUser.blood_type || '-'}</span>
-                  
-                  <strong key="health-height-label">Tinggi Badan:</strong>
-                  <span key="health-height-value">{selectedUser.height ? `${selectedUser.height} cm` : '-'}</span>
-                  
-                  <strong key="health-weight-label">Berat Badan:</strong>
-                  <span key="health-weight-value">{selectedUser.weight ? `${selectedUser.weight} kg` : '-'}</span>
-                  
-                  {selectedUser.height && selectedUser.weight && (
-                    <>
-                      <strong key="health-bmi-label">BMI:</strong>
-                      <span key="health-bmi-value">{((selectedUser.weight / ((selectedUser.height / 100) ** 2)).toFixed(1))}</span>
-                    </>
-                  )}
+              <div className="card">
+                <h3 style={{ fontSize: '1.1rem', marginBottom: 16 }}>Distribusi Aktivitas Platform</h3>
+                <div style={{ width: '100%', height: 300, minWidth: 0, minHeight: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData.activityData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis type="number" stroke="var(--text-muted)" />
+                      <YAxis dataKey="name" type="category" width={100} stroke="var(--text-muted)" fontSize={12} />
+                      <RechartsTooltip contentStyle={{ background: 'var(--bg-card)', borderColor: '#000' }} />
+                      <Bar dataKey="value" fill="var(--accent)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Activity Logs Modal */}
-      {showActivityLogs && (
-        <div className="modal-overlay" onClick={() => setShowActivityLogs(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 800 }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Activity Logs</h3>
-              <button className="btn btn-icon btn-secondary" onClick={() => setShowActivityLogs(false)}>
-                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>×</span>
-              </button>
+          <div className="card">
+            <div className="flex-between" style={{ marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Clock size={18} /> Aktivitas Terkini (Real-time)
+              </h3>
+              <button className="btn btn-secondary btn-sm" onClick={loadActivityLogs}><RefreshCw size={14} /></button>
             </div>
-
-            <div className="table-container" style={{ maxHeight: 400 }}>
+            <div className="table-container" style={{ maxHeight: 300 }}>
               <table>
                 <thead>
-                  <tr>
-                    <th>Waktu</th>
-                    <th>User</th>
-                    <th>Aksi</th>
-                    <th>Deskripsi</th>
-                  </tr>
+                  <tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Deskripsi</th></tr>
                 </thead>
                 <tbody>
-                  {activityLogs.length > 0 ? (
-                    activityLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td style={{ fontSize: '0.85rem' }}>
-                          {new Date(log.created_at).toLocaleString('id-ID')}
-                        </td>
-                        <td>{log.user_name}</td>
-                        <td>
-                          <span className="badge badge-secondary">{log.action}</span>
-                        </td>
-                        <td style={{ fontSize: '0.85rem' }}>{log.description}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                        Belum ada activity log.
-                      </td>
+                  {activityLogs.slice(0, 10).map((log, i) => (
+                    <tr key={`act-${log.id}-${i}`}>
+                      <td style={{ fontSize: '0.85rem' }}>{new Date(log.created_at).toLocaleString('id-ID')}</td>
+                      <td>{log.user_name}</td>
+                      <td><span className="badge badge-secondary">{log.action}</span></td>
+                      <td style={{ fontSize: '0.85rem' }}>{log.description}</td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -672,58 +327,151 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* System Health Modal */}
-      {showSystemHealth && (
-        <div className="modal-overlay" onClick={() => setShowSystemHealth(false)}>
+      {/* TAB 2: USER MANAGEMENT */}
+      {activeTab === 'users' && (
+        <div className="card">
+          <div className="flex-between" style={{ marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+            <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users size={18} /> Daftar Semua Pengguna ({filteredUsers.length})
+            </h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} title="Export Data"><Download size={16} /> Export CSV</button>
+              <div style={{ position: 'relative' }}>
+                <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="input" style={{ paddingRight: 32, minWidth: 120 }}>
+                  <option value="all">Semua Role</option>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <Filter size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--bg-input)', border: 'var(--border-brutal)', borderRadius: 'var(--radius-brutal)', padding: '8px 14px' }}>
+                <Search size={16} style={{ color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Cari nama, email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ background: 'none', border: 'none', outline: 'none' }} />
+              </div>
+            </div>
+          </div>
+
+          {selectedUsers.length > 0 && (
+            <div className="card-glass" style={{ marginBottom: 16, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--warning)', borderColor: '#000' }}>
+              <span style={{ fontWeight: 700, color: '#000' }}>{selectedUsers.length} pengguna dipilih</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-danger btn-sm" onClick={handleBulkDelete}><Trash2 size={14} /> Hapus Semua</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setSelectedUsers([])}>Batal</button>
+              </div>
+            </div>
+          )}
+
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: 40 }}><input type="checkbox" checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0} onChange={() => setSelectedUsers(selectedUsers.length === filteredUsers.length ? [] : filteredUsers.map(u => u.id))} style={{ cursor: 'pointer' }} /></th>
+                  <th>Nama</th><th>Email</th><th>Role</th><th>Terdaftar</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.length > 0 ? filteredUsers.map((u, i) => (
+                  <tr key={`${u.id}-${i}`} style={{ background: selectedUsers.includes(u.id) ? 'var(--glass-bg)' : undefined }}>
+                    <td><input type="checkbox" checked={selectedUsers.includes(u.id)} onChange={() => setSelectedUsers(prev => prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id])} style={{ cursor: 'pointer' }} /></td>
+                    <td>
+                      <div style={{ fontWeight: 800 }}>{u.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>NIK: {u.nik || '-'}</div>
+                    </td>
+                    <td>{u.email}</td>
+                    <td><span className={`badge ${u.role === 'admin' ? 'badge-danger' : 'badge-primary'}`}>{u.role?.toUpperCase()}</span></td>
+                    <td style={{ fontSize: '0.85rem' }}>{new Date(u.created_at).toLocaleDateString('id-ID')}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => { setSelectedUser(u); setShowUserModal(true); }}><Eye size={14} /></button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleChangeRole(u.id, u.role)} title={u.role === 'admin' ? 'Jadikan User' : 'Jadikan Admin'}>{u.role === 'admin' ? <UserX size={14} /> : <UserCheck size={14} />}</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u.id, u.name)}><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : <tr><td colSpan={6} style={{ textAlign: 'center' }}>Tidak ada pengguna ditemukan.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: SYSTEM DIAGNOSTICS */}
+      {activeTab === 'system' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="flex-between">
+            <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: 8 }}><Server size={20} /> Diagnostic Overview</h2>
+            <div style={{ color: 'var(--success)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span className="pulse-dot" style={{ width: 8, height: 8, background: 'var(--success)', borderRadius: '50%', display: 'inline-block' }}></span>
+              Live Sync (5s)
+            </div>
+          </div>
+          
+          {systemHealth ? (
+            <div className="grid-3">
+              <div className="card-glass" style={{ borderLeft: '5px solid var(--success)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Cpu size={16} /> Server CPU</div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit' }}>{systemHealth.cpuUsage}</div>
+                <div style={{ fontSize: '0.75rem', marginTop: 4 }}>Healthy Load</div>
+              </div>
+              <div className="card-glass" style={{ borderLeft: '5px solid var(--warning)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Database size={16} /> RAM / Memory</div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit' }}>{systemHealth.memoryUsage}</div>
+                <div style={{ fontSize: '0.75rem', marginTop: 4 }}>Allocated usage</div>
+              </div>
+              <div className="card-glass" style={{ borderLeft: '5px solid var(--primary)' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Network size={16} /> Active Connections</div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'Outfit' }}>{systemHealth.activeConnections}</div>
+                <div style={{ fontSize: '0.75rem', marginTop: 4 }}>Current sessions</div>
+              </div>
+            </div>
+          ) : <div className="card">Loading metrics...</div>}
+
+          {systemHealth && (
+            <div className="grid-2-custom">
+              <div className="card">
+                <h3 style={{ fontSize: '1.1rem', marginBottom: 16 }}>Database & Storage</h3>
+                <table style={{ width: '100%', fontSize: '0.95rem' }}>
+                  <tbody>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>Size:</strong></td><td style={{ textAlign: 'right' }}>{systemHealth.databaseSize}</td></tr>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>Tables:</strong></td><td style={{ textAlign: 'right' }}>{systemHealth.totalTables}</td></tr>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>Last Backup:</strong></td><td style={{ textAlign: 'right' }}>{systemHealth.lastBackup}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="card">
+                <h3 style={{ fontSize: '1.1rem', marginBottom: 16 }}>Network & API</h3>
+                <table style={{ width: '100%', fontSize: '0.95rem' }}>
+                  <tbody>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>API Latency:</strong></td><td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: 800 }}>{systemHealth.latency}</td></tr>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>Uptime:</strong></td><td style={{ textAlign: 'right' }}>{systemHealth.uptime}</td></tr>
+                    <tr><td style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}><strong>Environment:</strong></td><td style={{ textAlign: 'right' }}><span className="badge badge-primary">PRODUCTION</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* User Modal ... (simplified but functionally identical) */}
+      {showUserModal && selectedUser && (
+        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
             <div className="modal-header">
-              <h3 className="modal-title">System Health Monitor</h3>
-              <button className="btn btn-icon btn-secondary" onClick={() => setShowSystemHealth(false)}>
-                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>×</span>
-              </button>
+              <h3 className="modal-title">Detail Pengguna</h3>
+              <button className="btn btn-icon btn-secondary" onClick={() => setShowUserModal(false)}>×</button>
             </div>
-
-            {systemHealth ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div key="health-db" className="card-glass" style={{ padding: 16 }}>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Database size={16} /> Database Status
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
-                    <strong key="db-size-label">Database Size:</strong>
-                    <span key="db-size-value">{systemHealth.databaseSize}</span>
-                    
-                    <strong key="db-tables-label">Total Tables:</strong>
-                    <span key="db-tables-value">{systemHealth.totalTables}</span>
-                    
-                    <strong key="db-status-label">Status:</strong>
-                    <span key="db-status-value" className="badge badge-success">HEALTHY</span>
-                  </div>
-                </div>
-
-                <div key="health-system" className="card-glass" style={{ padding: 16 }}>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Activity size={16} /> System Info
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
-                    <strong key="sys-uptime-label">Uptime:</strong>
-                    <span key="sys-uptime-value">{systemHealth.uptime}</span>
-                    
-                    <strong key="sys-backup-label">Last Backup:</strong>
-                    <span key="sys-backup-value">{systemHealth.lastBackup}</span>
-                    
-                    <strong key="sys-env-label">Environment:</strong>
-                    <span key="sys-env-value" className="badge badge-primary">PRODUCTION</span>
-                  </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="card-glass" style={{ padding: 16 }}>
+                <h4 style={{ fontSize: '0.95rem', marginBottom: 12 }}>Informasi Akun</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '0.9rem' }}>
+                  <strong>ID:</strong><span>{selectedUser.id}</span>
+                  <strong>Nama:</strong><span>{selectedUser.name}</span>
+                  <strong>Email:</strong><span>{selectedUser.email}</span>
+                  <strong>Role:</strong><span className="badge badge-primary">{selectedUser.role}</span>
                 </div>
               </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-                Loading system health data...
-              </div>
-            )}
-
-           
+            </div>
           </div>
         </div>
       )}

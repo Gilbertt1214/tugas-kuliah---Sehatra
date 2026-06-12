@@ -17,7 +17,8 @@ export async function GET() {
     const detections = result.rows;
     
     return NextResponse.json({ detections });
-  } catch { 
+  } catch (error) { 
+    console.error('GET /api/detection error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 }); 
   }
 }
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Pilih minimal 1 gejala' }, { status: 400 });
     }
 
-    const result = detectDisease(symptoms, description);
+    const result = await detectDisease(symptoms, description);
     
     await db.execute({
       sql: 'INSERT INTO disease_detections (user_id, symptoms, description, ai_result, risk_level, possible_conditions, recommendations) VALUES (?,?,?,?,?,?,?)',
@@ -42,7 +43,8 @@ export async function POST(req: NextRequest) {
     });
     
     return NextResponse.json({ result }, { status: 201 });
-  } catch { 
+  } catch (error) { 
+    console.error('POST /api/detection error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 }); 
   }
 }

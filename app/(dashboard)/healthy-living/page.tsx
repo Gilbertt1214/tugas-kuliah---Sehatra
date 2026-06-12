@@ -389,7 +389,7 @@ export default function HealthyLivingPage() {
                 <input className="input" placeholder="Nama target" value={goalTitle} onChange={e => setGoalTitle(e.target.value)} required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 12 }}>
+              <div className="grid-equal-2">
                 <div className="input-group">
                   <label>Nilai Target *</label>
                   <input className="input" type="number" placeholder="Misal: 8000" value={goalTarget} onChange={e => setGoalTarget(e.target.value)} required />
@@ -433,7 +433,7 @@ export default function HealthyLivingPage() {
                 <input className="input" placeholder="Contoh: 1 tablet, 500mg, 1 sendok teh" value={medDosage} onChange={e => setMedDosage(e.target.value)} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid-equal-2">
                 <div className="input-group">
                   <label>Frekuensi</label>
                   <select className="input" value={medFreq} onChange={e => setMedFreq(e.target.value)}>

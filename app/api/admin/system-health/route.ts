@@ -28,11 +28,21 @@ export async function GET() {
     // Last backup (mock - dalam production dari schedule backup)
     const lastBackup = new Date().toLocaleDateString('id-ID');
 
+    // Mock advanced metrics
+    const cpuUsage = Math.floor(Math.random() * 30) + 10; // 10-40%
+    const memoryUsage = Math.floor(Math.random() * 20) + 40; // 40-60%
+    const activeConnections = Math.floor(Math.random() * 100) + 120;
+    const latency = Math.floor(Math.random() * 50) + 20; // 20-70ms
+
     return NextResponse.json({
       databaseSize,
       totalTables,
       uptime,
       lastBackup,
+      cpuUsage: `${cpuUsage}%`,
+      memoryUsage: `${memoryUsage}%`,
+      activeConnections,
+      latency: `${latency}ms`,
       status: 'healthy'
     });
   } catch (error: unknown) {
