@@ -152,7 +152,7 @@ export default function AiChatPage() {
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', paddingBottom: 0 }}>
       <div className="page-header" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 className="page-title">Asisten AI Qwen</h2>
+          <h2 className="page-title">Chatbot AI Sehatra</h2>
           <p className="page-subtitle">Konsultasi kesehatan cerdas dengan AI generatif</p>
         </div>
         {messages.length > 0 && (

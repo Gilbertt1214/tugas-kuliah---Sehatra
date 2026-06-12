@@ -400,10 +400,6 @@ export default function AdminPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className="flex-between">
             <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: 8 }}><Server size={20} /> Diagnostic Overview</h2>
-            <div style={{ color: 'var(--success)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span className="pulse-dot" style={{ width: 8, height: 8, background: 'var(--success)', borderRadius: '50%', display: 'inline-block' }}></span>
-              Live Sync (5s)
-            </div>
           </div>
           
           {systemHealth ? (

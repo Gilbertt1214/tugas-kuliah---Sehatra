@@ -35,5 +35,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/monitoring/:path*', '/emergency/:path*', '/records/:path*', '/family/:path*', '/mental-health/:path*', '/detection/:path*', '/healthy-living/:path*', '/admin/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/monitoring/:path*', '/emergency/:path*', '/records/:path*', '/family/:path*', '/mental-health/:path*', '/detection/:path*', '/healthy-living/:path*', '/ai-chat/:path*', '/admin/:path*', '/login', '/register'],
 };
