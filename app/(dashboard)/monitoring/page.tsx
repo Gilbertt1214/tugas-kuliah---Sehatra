@@ -2,17 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Activity, 
   Watch, 
   RefreshCw, 
   Plus, 
-  TrendingUp, 
-  Heart, 
-  Compass, 
-  Smile, 
-  Flame,
   CheckCircle,
-  HelpCircle,
   AlertTriangle
 } from 'lucide-react';
 import { 
@@ -22,8 +15,7 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  CartesianGrid,
-  Legend
+  CartesianGrid
 } from 'recharts';
 
 interface Metric {
@@ -40,6 +32,7 @@ export default function MonitoringPage() {
   const [deviceConnected, setDeviceConnected] = useState(false);
   const [connectingDevice, setConnectingDevice] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState('Apple Watch Series 9');
+  const [mounted, setMounted] = useState(false);
   
   // Metric Inputs
   const [type, setType] = useState('heart_rate');
@@ -64,6 +57,7 @@ export default function MonitoringPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     fetchMetrics();
   }, []);
 
@@ -289,8 +283,8 @@ export default function MonitoringPage() {
                 Analisis & Peringatan AI
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {aiAlerts.map((a) => (
-                  <div key={a.text} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
+                {aiAlerts.map((a, idx) => (
+                  <div key={idx} style={{ fontSize: '0.85rem', color: '#000000', display: 'flex', gap: 8, fontWeight: 600 }}>
                     <span>•</span>
                     <span>{a.text}</span>
                   </div>
@@ -302,8 +296,8 @@ export default function MonitoringPage() {
           {/* Heart Rate Graph */}
           <div className="card">
             <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Grafik Detak Jantung (Bpm)</h3>
-            <div style={{ width: '100%', height: 200, minWidth: 0, minHeight: 200 }}>
-              {heartRateData.length > 0 ? (
+            <div style={{ width: '100%', height: 260, minWidth: 0, minHeight: 260 }}>
+              {mounted && heartRateData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={heartRateData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -315,7 +309,7 @@ export default function MonitoringPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex-center" style={{ height: '100%', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  Belum ada data detak jantung untuk ditampilkan di grafik.
+                  {mounted ? 'Belum ada data detak jantung untuk ditampilkan di grafik.' : 'Memuat grafik...'}
                 </div>
               )}
             </div>
@@ -324,8 +318,8 @@ export default function MonitoringPage() {
           {/* Steps Graph */}
           <div className="card">
             <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Grafik Aktivitas Langkah Kaki</h3>
-            <div style={{ width: '100%', height: 200, minWidth: 0, minHeight: 200 }}>
-              {stepsData.length > 0 ? (
+            <div style={{ width: '100%', height: 260, minWidth: 0, minHeight: 260 }}>
+              {mounted && stepsData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stepsData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -337,7 +331,7 @@ export default function MonitoringPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex-center" style={{ height: '100%', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  Belum ada data langkah kaki untuk ditampilkan di grafik.
+                  {mounted ? 'Belum ada data langkah kaki untuk ditampilkan di grafik.' : 'Memuat grafik...'}
                 </div>
               )}
             </div>

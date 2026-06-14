@@ -139,10 +139,7 @@ export default function LandingPage() {
 
             {/* Feature Badges list */}
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 600 }}>
-                <ShieldCheck size={18} style={{ color: 'var(--success)' }} />
-                <span>Terintegrasi BPJS & Kemenkes</span>
-              </div>
+          
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 600 }}>
                 <Clock size={18} style={{ color: 'var(--primary-light)' }} />
                 <span>Pemantauan AI 24/7</span>

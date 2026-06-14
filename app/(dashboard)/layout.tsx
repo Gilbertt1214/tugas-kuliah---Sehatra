@@ -43,6 +43,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} userRole={user?.role} />
+      {sidebarOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="main-content">
         <Header userName={user?.name || 'Pengguna'} onOpenSidebar={() => setSidebarOpen(true)} />
         <main style={{ minHeight: 'calc(100vh - 73px)' }}>

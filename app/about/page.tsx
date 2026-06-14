@@ -85,12 +85,14 @@ export default function AboutPage() {
             Seha<span style={{ color: 'var(--success)' }}>tra</span>
           </span>
         </div>
-        <div className="sehatra-header-actions">
+        <div className="sehatra-header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href="/" className="btn btn-secondary">
-            <ArrowLeft size={18} /> Kembali
+            <ArrowLeft size={18} /> 
+            <span className="mobile-hide">Kembali</span>
           </Link>
           <Link href="/register" className="btn btn-primary">
-            Daftar Sekarang
+            <span className="mobile-hide">Daftar Sekarang</span>
+            <span className="mobile-show">Daftar</span>
           </Link>
         </div>
       </header>
@@ -108,7 +110,7 @@ export default function AboutPage() {
             <Sparkles size={14} /> Tentang Sehatra
           </div>
 
-          <h1 style={{ 
+          <h1 className="landing-hero-title" style={{ 
             fontSize: '4rem', 
             fontWeight: 900, 
             marginBottom: 24, 
@@ -146,15 +148,7 @@ export default function AboutPage() {
         </div>
 
         {/* What is Sehatra Section */}
-        <div style={{ 
-          background: 'var(--bg-card)', 
-          border: 'var(--border-brutal)', 
-          borderRadius: 'var(--radius-brutal)',
-          padding: 60,
-          marginBottom: 80,
-          boxShadow: '10px 10px 0px #000000',
-          position: 'relative'
-        }}>
+        <div className="about-card">
           <div style={{ 
             position: 'absolute', 
             top: -20, 
@@ -432,15 +426,7 @@ export default function AboutPage() {
         </div>
 
         {/* Vision Section */}
-        <div style={{
-          background: 'var(--bg-dark)',
-          border: 'var(--border-brutal)',
-          borderRadius: 'var(--radius-brutal)',
-          padding: 60,
-          marginBottom: 80,
-          boxShadow: '8px 8px 0px #000000',
-          textAlign: 'center'
-        }}>
+        <div className="about-card-dark">
           <Lightbulb size={48} style={{ color: 'var(--warning)', marginBottom: 20 }} />
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: 24, textTransform: 'uppercase' }}>
             Menuju Society 5.0
@@ -452,15 +438,7 @@ export default function AboutPage() {
             dan <strong style={{ color: 'var(--warning)' }}>berkelanjutan</strong> di era <strong>Society 5.0</strong>.
           </p>
         </div>
-        <div style={{ 
-          background: 'var(--bg-card)', 
-          border: 'var(--border-brutal)', 
-          borderRadius: 'var(--radius-brutal)',
-          padding: 60,
-          marginBottom: 80,
-          boxShadow: '10px 10px 0px #000000',
-          position: 'relative'
-        }}>
+        <div className="about-card">
           <div style={{ 
             position: 'absolute', 
             top: -20, 
@@ -478,7 +456,7 @@ export default function AboutPage() {
             Misi Kami
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', marginTop: 20 }}>
+          <div className="about-grid-split">
             <div>
               <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: 24, textTransform: 'uppercase', lineHeight: 1.2 }}>
                 Membuat Kesehatan<br />Berkualitas<br />

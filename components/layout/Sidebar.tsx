@@ -2,33 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Activity, 
-  AlertTriangle, 
-  FileText, 
-  Users, 
-  Brain, 
-  Search, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  Activity,
+  AlertTriangle,
+  FileText,
+  Users,
+  Brain,
+  Search,
+  Calendar,
   LogOut,
-  Menu,
-  X,
   Heart,
   ShieldCheck,
-  MessageSquare
+  MessageSquare,
+  X,
 } from 'lucide-react';
 
 const MENU_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/monitoring', label: 'Health Monitoring', icon: Activity },
-  { href: '/emergency', label: 'Smart Emergency', icon: AlertTriangle },
-  { href: '/records', label: 'Rekam Medis', icon: FileText },
-  { href: '/family', label: 'Kesehatan Keluarga', icon: Users },
-  { href: '/mental-health', label: 'Kesehatan Mental', icon: Brain },
-  { href: '/detection', label: 'Deteksi Penyakit', icon: Search },
-  { href: '/healthy-living', label: 'Gaya Hidup Sehat', icon: Calendar },
-  { href: '/ai-chat', label: 'Chatbot AI Sehatra', icon: MessageSquare },
+  { href: '/dashboard',     label: 'Dashboard',           icon: LayoutDashboard },
+  { href: '/monitoring',    label: 'Health Monitoring',    icon: Activity },
+  { href: '/emergency',     label: 'Smart Emergency',      icon: AlertTriangle },
+  { href: '/records',       label: 'Rekam Medis',          icon: FileText },
+  { href: '/family',        label: 'Kesehatan Keluarga',   icon: Users },
+  { href: '/mental-health', label: 'Kesehatan Mental',     icon: Brain },
+  { href: '/detection',     label: 'Deteksi Penyakit',     icon: Search },
+  { href: '/healthy-living',label: 'Gaya Hidup Sehat',     icon: Calendar },
+  { href: '/ai-chat',       label: 'Chatbot AI Sehatra',   icon: MessageSquare },
 ];
 
 interface SidebarProps {
@@ -59,13 +58,25 @@ export default function Sidebar({ isOpen, onClose, userRole }: SidebarProps) {
         <div className="sidebar-logo-icon">
           <Heart size={20} fill="#000000" stroke="#000000" />
         </div>
-        <div className="sidebar-logo-text">Seha<span>tra</span></div>
-        <button 
-          onClick={onClose} 
-          className="btn btn-icon btn-secondary mobile-menu-btn" 
-          style={{ marginLeft: 'auto', width: 32, height: 32 }}
+        <div className="sidebar-logo-text">
+          Seha<span>tra</span>
+        </div>
+
+        {/*
+          Tombol close — HANYA muncul di mobile (≤768px).
+          Visibilitas sepenuhnya dikontrol oleh globals.css:
+            .sidebar-close-btn        → display: none   (desktop default)
+            @media (max-width: 768px) → display: flex   (mobile override)
+
+          PENTING: JANGAN taruh display di sini. Inline style selalu
+          menang atas CSS class dan merusak hide/show logic.
+        */}
+        <button
+          onClick={onClose}
+          className="sidebar-close-btn"
+          aria-label="Tutup Menu"
         >
-          <X size={18} />
+          <X size={22} strokeWidth={3} color="#000000" />
         </button>
       </div>
 
@@ -75,13 +86,13 @@ export default function Sidebar({ isOpen, onClose, userRole }: SidebarProps) {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
-            <Link 
-              key={item.href} 
+            <Link
+              key={item.href}
               href={item.href}
               className={`sidebar-link ${isActive ? 'active' : ''}`}
               onClick={onClose}
             >
-              <Icon className="link-icon" size={18} />
+              <Icon className="link-icon" size={18} strokeWidth={2} />
               <span>{item.label}</span>
             </Link>
           );
@@ -89,22 +100,34 @@ export default function Sidebar({ isOpen, onClose, userRole }: SidebarProps) {
 
         {userRole === 'admin' && (
           <>
-            <div className="sidebar-section" style={{ marginTop: 16 }}>Administrator</div>
-            <Link 
+            <div className="sidebar-section" style={{ marginTop: 16 }}>
+              Administrator
+            </div>
+            <Link
               href="/admin"
               className={`sidebar-link ${pathname === '/admin' ? 'active' : ''}`}
               onClick={onClose}
             >
-              <ShieldCheck className="link-icon" size={18} />
+              <ShieldCheck className="link-icon" size={18} strokeWidth={2} />
               <span>Admin Panel</span>
             </Link>
           </>
         )}
       </nav>
 
-      <div style={{ marginTop: 'auto', padding: '16px 0 0 0', borderTop: '1px solid var(--glass-border)' }}>
-        <button className="sidebar-link" onClick={handleLogout} style={{ color: 'var(--danger)' }}>
-          <LogOut className="link-icon" size={18} />
+      <div
+        style={{
+          marginTop: 'auto',
+          padding: '16px 0 0 0',
+          borderTop: '2px solid #000000',
+        }}
+      >
+        <button
+          className="sidebar-link"
+          onClick={handleLogout}
+          style={{ color: 'var(--danger)' }}
+        >
+          <LogOut className="link-icon" size={18} strokeWidth={2} />
           <span>Keluar</span>
         </button>
       </div>

@@ -33,25 +33,29 @@ export default function AiChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load chat history from localStorage on mount
+  // Handle mounting to prevent hydration issues
   useEffect(() => {
+    setMounted(true);
     setMessages(loadMessages());
   }, []);
 
-  // Save to localStorage whenever messages change
+  // Save to localStorage whenever messages change (but only after mount)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (mounted && messages.length > 0) {
       saveMessages(messages);
     }
-  }, [messages]);
+  }, [messages, mounted]);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (mounted) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, mounted]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -147,6 +151,14 @@ export default function AiChatPage() {
       abortRef.current = null;
     }
   }, [input, isLoading, messages]);
+
+  if (!mounted) {
+    return (
+      <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 80px)' }}>
+        <div style={{ color: 'var(--text-muted)' }}>Memuat...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', paddingBottom: 0 }}>
