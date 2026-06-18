@@ -217,7 +217,7 @@ export default function AiChatPage() {
                     m.content
                   )
                 ) : (
-                  isLoading && m.role === 'assistant' ? '⏳ Menganalisis...' : ''
+                  isLoading && m.role === 'assistant' ? 'Menganalisis...' : ''
                 )}
               </div>
             </div>

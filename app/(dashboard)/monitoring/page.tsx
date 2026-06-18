@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Watch, 
   RefreshCw, 
   Plus, 
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Bluetooth,
+  Battery,
+  Activity
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -17,6 +20,7 @@ import {
   Tooltip, 
   CartesianGrid
 } from 'recharts';
+import { BangleJSConnector } from '@/lib/banglejs-connector';
 
 interface Metric {
   id: number;
@@ -31,8 +35,13 @@ export default function MonitoringPage() {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [deviceConnected, setDeviceConnected] = useState(false);
   const [connectingDevice, setConnectingDevice] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState('Apple Watch Series 9');
   const [mounted, setMounted] = useState(false);
+  
+  // Bangle.js specific states
+  const [currentHeartRate, setCurrentHeartRate] = useState<number | null>(null);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [deviceInfo, setDeviceInfo] = useState<{ name: string; id: string } | null>(null);
+  const bangleConnector = useRef<BangleJSConnector | null>(null);
   
   // Metric Inputs
   const [type, setType] = useState('heart_rate');
@@ -59,26 +68,106 @@ export default function MonitoringPage() {
   useEffect(() => {
     setMounted(true);
     fetchMetrics();
+    
+    // Cleanup on unmount
+    return () => {
+      if (bangleConnector.current) {
+        bangleConnector.current.disconnect();
+      }
+    };
   }, []);
 
-  const handleConnectDevice = () => {
+  const handleConnectSmartwatch = async () => {
     setConnectingDevice(true);
-    setTimeout(() => {
+    
+    try {
+      // Check Web Bluetooth support
+      if (!BangleJSConnector.isSupported()) {
+        alert('❌ Web Bluetooth tidak didukung di browser ini.\n\nSilakan gunakan:\n• Chrome Desktop\n• Edge Desktop\n• Opera Desktop\n\n(Tidak support: Safari, Firefox, iOS browsers)');
+        setConnectingDevice(false);
+        return;
+      }
+
+      // Initialize connector with callbacks
+      bangleConnector.current = new BangleJSConnector({
+        onHeartRateChange: async (value) => {
+          console.log('💓 Heart rate updated:', value);
+          setCurrentHeartRate(value);
+          
+          // Auto-save to database
+          await fetch('/api/health/monitoring', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metric_type: 'heart_rate',
+              value: value,
+              unit: 'bpm',
+              notes: `Auto-sync dari ${deviceInfo?.name || 'Smartwatch'} (Real-time)`
+            })
+          });
+          
+          fetchMetrics(); // Refresh UI
+        },
+        onBatteryChange: (value) => {
+          console.log('🔋 Battery updated:', value);
+          setBatteryLevel(value);
+        },
+        onDisconnect: () => {
+          console.log('🔌 Device disconnected');
+          setDeviceConnected(false);
+          setDeviceInfo(null);
+          setCurrentHeartRate(null);
+          setBatteryLevel(null);
+        },
+        onError: (error) => {
+          console.error('❌ Error:', error);
+          alert('Error: ' + error.message);
+        }
+      });
+
+      // Connect to device - this will show browser's device picker
+      const connected = await bangleConnector.current.connect();
+      
+      if (connected) {
+        setDeviceConnected(true);
+        setConnectingDevice(false);
+        
+        const info = bangleConnector.current.getDeviceInfo();
+        setDeviceInfo(info);
+        
+        // Get initial battery level
+        const battery = await bangleConnector.current.getBatteryLevel();
+        if (battery !== null) {
+          setBatteryLevel(battery);
+        }
+        
+        console.log('✅ Connected to:', info?.name);
+      }
+    } catch (error) {
+      console.error('Connection failed:', error);
       setConnectingDevice(false);
-      setDeviceConnected(true);
-      // Auto seed some dummy metrics upon syncing
-      simulateSyncData();
-    }, 2000);
+      
+      if (error instanceof Error) {
+        // User cancelled the pairing dialog
+        if (error.message.includes('User cancelled') || error.name === 'NotFoundError') {
+          // Silent fail - user just closed dialog
+          return;
+        }
+        // Other errors
+        alert('Gagal terhubung: ' + error.message);
+      }
+    }
   };
 
   const simulateSyncData = async () => {
     setSyncing(true);
     try {
+      const deviceName = deviceInfo?.name || 'Smartwatch';
       const demoData = [
-        { metric_type: 'heart_rate', value: 76, unit: 'bpm', notes: `Sinkronisasi otomatis ${selectedDevice}` },
-        { metric_type: 'steps', value: 6420, unit: 'langkah', notes: `Sinkronisasi otomatis ${selectedDevice}` },
-        { metric_type: 'blood_pressure', value: 120, unit: 'mmHg', notes: `Sinkronisasi otomatis ${selectedDevice}` },
-        { metric_type: 'blood_sugar', value: 98, unit: 'mg/dL', notes: `Sinkronisasi otomatis ${selectedDevice}` }
+        { metric_type: 'heart_rate', value: 76, unit: 'bpm', notes: `Sinkronisasi otomatis ${deviceName}` },
+        { metric_type: 'steps', value: 6420, unit: 'langkah', notes: `Sinkronisasi otomatis ${deviceName}` },
+        { metric_type: 'blood_pressure', value: 120, unit: 'mmHg', notes: `Sinkronisasi otomatis ${deviceName}` },
+        { metric_type: 'blood_sugar', value: 98, unit: 'mg/dL', notes: `Sinkronisasi otomatis ${deviceName}` }
       ];
 
       for (const item of demoData) {
@@ -94,6 +183,16 @@ export default function MonitoringPage() {
     } finally {
       setTimeout(() => setSyncing(false), 1500);
     }
+  };
+
+  const handleDisconnect = async () => {
+    if (bangleConnector.current) {
+      await bangleConnector.current.disconnect();
+    }
+    setDeviceConnected(false);
+    setDeviceInfo(null);
+    setCurrentHeartRate(null);
+    setBatteryLevel(null);
   };
 
   const handleAddMetric = async (e: React.FormEvent) => {
@@ -193,43 +292,91 @@ export default function MonitoringPage() {
             
             {deviceConnected ? (
               <div>
-                <div className="flex-between" style={{ background: 'var(--bg-input)', border: 'var(--border-brutal)', padding: 12, borderRadius: 'var(--radius-brutal)', marginBottom: 16, boxShadow: '3px 3px 0px #000000' }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                {/* Connected Device Info */}
+                <div className="flex-between" style={{ background: 'var(--bg-input)', border: 'var(--border-brutal)', padding: 12, borderRadius: 'var(--radius-brutal)', marginBottom: 12, boxShadow: '3px 3px 0px #000000' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1 }}>
                     <CheckCircle size={18} style={{ color: 'var(--success)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800 }}>Tersambung</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{selectedDevice}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--success)' }}>🔴 Live Connection</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                        {deviceInfo?.name || 'Smartwatch Connected'}
+                      </div>
                     </div>
                   </div>
-                  <button className="btn btn-secondary btn-icon" onClick={simulateSyncData} disabled={syncing} style={{ width: 32, height: 32 }}>
+                  <button className="btn btn-secondary btn-icon" onClick={simulateSyncData} disabled={syncing} style={{ width: 32, height: 32 }} title="Manual Sync">
                     <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
                   </button>
                 </div>
+
+                {/* Real-time metrics */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div style={{ background: 'var(--bg-card)', border: 'var(--border-brutal)', padding: 12, borderRadius: 'var(--radius-brutal)', boxShadow: '2px 2px 0px #000000' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <Activity size={14} style={{ color: 'var(--danger)' }} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>HEART RATE</span>
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text)' }}>
+                      {currentHeartRate !== null ? currentHeartRate : '--'} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>bpm</span>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'var(--bg-card)', border: 'var(--border-brutal)', padding: 12, borderRadius: 'var(--radius-brutal)', boxShadow: '2px 2px 0px #000000' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <Battery size={14} style={{ color: 'var(--success)' }} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>BATTERY</span>
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text)' }}>
+                      {batteryLevel !== null ? batteryLevel : '--'} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>%</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
-                  Data kesehatan tersinkronisasi secara otomatis dari smartwatch Anda.
+                  🔴 Data kesehatan tersinkronisasi secara real-time dari smartwatch Anda.
                 </p>
-                <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setDeviceConnected(false)}>
+                <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleDisconnect}>
                   Putuskan Perangkat
                 </button>
               </div>
             ) : (
               <div>
-                <div className="input-group" style={{ marginBottom: 16 }}>
-                  <label>Pilih Perangkat Anda</label>
-                  <select className="input" value={selectedDevice} onChange={e => setSelectedDevice(e.target.value)}>
-                    <option>Apple Watch Series 9</option>
-                    <option>Garmin Venu 3</option>
-                    <option>Fitbit Charge 6</option>
-                    <option>Samsung Galaxy Watch 6</option>
-                  </select>
+                {/* Connection Instructions */}
+                <div style={{ background: 'var(--bg-card)', padding: 12, borderRadius: 'var(--radius-brutal)', marginBottom: 16, fontSize: '0.8rem', border: 'var(--border-brutal)' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <Bluetooth size={16} style={{ color: 'var(--primary)', marginTop: 2, flexShrink: 0 }} />
+                    <div>
+                      <strong style={{ display: 'block', marginBottom: 8 }}>Cara Koneksi Smartwatch:</strong>
+                      <ol style={{ marginLeft: 16, lineHeight: 1.6, fontSize: '0.75rem' }}>
+                        <li>Pastikan smartwatch Anda sudah menyala</li>
+                        <li>Aktifkan Bluetooth di laptop/PC Anda</li>
+                        <li>Klik tombol "Hubungkan Smartwatch"</li>
+                        <li>Pilih device Anda dari dialog yang muncul</li>
+                        <li>Klik "Pair" untuk menghubungkan</li>
+                      </ol>
+                      <div style={{ marginTop: 8, padding: 8, background: 'var(--bg-input)', borderRadius: 6, fontSize: '0.7rem' }}>
+                        💡 <strong>Tip:</strong> Pastikan smartwatch Anda sudah aktif dan Bluetooth-nya menyala.
+                      </div>
+                    </div>
+                  </div>
                 </div>
+                
                 <button 
                   className="btn btn-primary" 
-                  style={{ width: '100%' }} 
-                  onClick={handleConnectDevice}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} 
+                  onClick={handleConnectSmartwatch}
                   disabled={connectingDevice}
                 >
-                  {connectingDevice ? 'Menghubungkan...' : 'Hubungkan Smartwatch'}
+                  {connectingDevice ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Menghubungkan...
+                    </>
+                  ) : (
+                    <>
+                      <Bluetooth size={16} />
+                      Hubungkan Smartwatch
+                    </>
+                  )}
                 </button>
               </div>
             )}
